@@ -1,0 +1,44 @@
+name: S3 List to Existing GitHub Issue
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # 毎日午前9時 (JST)
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  issues: write   # Issueコメント投稿用の権限
+
+jobs:
+  post-s3-list-comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-oidc-Role
+          aws-region: ap-northeast-1
+
+      - name: Get S3 Bucket List
+        id: s3_ls
+        run: |
+          echo "S3_RESULT<<EOF" >> $GITHUB_ENV
+          aws s3 ls >> $GITHUB_ENV  # 👈 バケット名を外して単に aws s3 ls とする
+          echo "EOF" >> $GITHUB_ENV
+
+      # 既存のIssueにコメントを投稿する
+      - name: Post Comment to Existing Issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: "1"  # 👈 投稿先となる既存のIssue番号を指定してください
+        run: |
+          gh issue comment "$ISSUE_NUMBER" \
+            --body "### 【定期判定】S3バケット一覧 ($(date +'%Y-%m-%d %H:%M:%S'))
+
+          \`\`\`text
+          ${{ env.S3_RESULT }}
+          \`\`\`"
