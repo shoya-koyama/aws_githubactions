@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'main'
+  workflow_dispatch:  # 手動実行用に追加
 
 permissions:
   id-token: write
@@ -17,18 +18,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set environment variables based on branch
-        id: set-vars
-        run: echo "ASSUME_ROLE=${{ secrets.AWS_ROLE_ARN }}" >> $GITHUB_ENV
-
-      - name: Debug Variables
-        run: echo "ASSUME_ROLE=${{ env.ASSUME_ROLE }}"
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ap-northeast-1
-          role-to-assume: ${{ env.ASSUME_ROLE }}
+          # Secretsを使わず、ARNを直書きしてテストします
+          role-to-assume: arn:aws:iam::921810471152:role/github-oidc-Role
 
       - name: Print Hello World plan
         run: echo "Hello, aws Plan"
