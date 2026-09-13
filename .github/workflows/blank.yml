@@ -31,4 +31,4 @@ jobs:
           role-to-assume: ${{ env.ASSUME_ROLE }}
 
       - name: Print Hello World plan
-        run: echo "Hello, Plan"
+        run: echo "Hello, aws Plan"
